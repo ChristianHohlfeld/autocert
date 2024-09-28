@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   traefik:
     image: traefik:v2.10
@@ -11,6 +9,7 @@ services:
       - --certificatesresolvers.myresolver.acme.tlschallenge=true
       - --certificatesresolvers.myresolver.acme.email={{ letsencrypt_email }}
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+      - --log.level=DEBUG  # Set the log level to DEBUG
     ports:
       - "80:80"
       - "443:443"
@@ -19,11 +18,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
     networks:
-      - web  # Connect Traefik to the 'web' network
+      - autocert_web  # Use autocert_web instead of web
 
 volumes:
   traefik-certificates:
 
 networks:
-  web:  # Define the 'web' network managed by Docker Compose
+  autocert_web:  # Define the 'autocert_web' network for Traefik and other services
     driver: bridge
