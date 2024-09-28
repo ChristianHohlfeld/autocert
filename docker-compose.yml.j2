@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - --api
+      - --providers.docker
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.myresolver.acme.tlschallenge=true
+      - --certificatesresolvers.myresolver.acme.email=chris.hohlfeld@gmail.com
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - traefik-certificates:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+  identityserver:
+    image: nginx:alpine  # A lightweight NGINX container
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.identityserver.rule=Host(`{{ domain_name }}`)"
+      - "traefik.http.routers.identityserver.entrypoints=websecure"
+      - "traefik.http.routers.identityserver.tls.certresolver=myresolver"
+
+volumes:
+  traefik-certificates:

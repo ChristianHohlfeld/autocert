@@ -1,0 +1,55 @@
+---
+- hosts: local
+  become: true
+
+  vars:
+    traefik_directory: /home/chris/autocert
+    domain_name: identityserver.de  # The domain name is referenced here
+
+  tasks:
+    # Task 1: Install Docker
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+
+    # Task 2: Install Docker Compose
+    - name: Install Docker Compose
+      apt:
+        name: docker-compose
+        state: present
+
+    # Task 3: Create directory for Traefik setup
+    - name: Create Traefik directory
+      file:
+        path: "{{ traefik_directory }}"
+        state: directory
+        mode: '0755'
+
+    # Task 4: Copy docker-compose.yml from a Jinja2 template
+    - name: Copy docker-compose.yml template
+      template:
+        src: ./docker-compose.yml.j2
+        dest: "{{ traefik_directory }}/docker-compose.yml"
+        mode: '0644'
+
+    # Task 5: Copy traefik.yml to the host
+    - name: Copy traefik.yml
+      copy:
+        src: ./traefik.yml
+        dest: "{{ traefik_directory }}/traefik.yml"
+        mode: '0644'
+
+    # Task 6: Create acme.json and set permissions automatically
+    - name: Create acme.json with correct permissions
+      file:
+        path: "{{ traefik_directory }}/acme.json"
+        state: touch
+        mode: '0600'
+
+    # Task 7: Start Traefik with Docker Compose
+    - name: Start Traefik
+      command: docker-compose up -d
+      args:
+        chdir: "{{ traefik_directory }}"

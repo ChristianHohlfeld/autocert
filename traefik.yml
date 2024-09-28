@@ -1,0 +1,40 @@
+# Entry points define where Traefik listens for traffic
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true  # This ensures permanent redirect from HTTP to HTTPS
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: myresolver  # This uses the Let's Encrypt certificate resolver
+
+# Certificates resolver configuration for Let's Encrypt
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: chris.hohlfeld@gmail.com  # Your email for Let's Encrypt registration
+      storage: /letsencrypt/acme.json  # Where certificates will be stored
+      tlsChallenge: true               # Use TLS challenge for certificate issuance
+
+# Providers configuration, Traefik will monitor Docker for changes
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false  # Only expose containers explicitly labeled
+
+# Optional: Enable Traefik API and dashboard
+api:
+  dashboard: true  # Set to true to enable the dashboard (access via /dashboard)
+
+# Logging settings (optional)
+log:
+  level: INFO  # Change to DEBUG for more verbose logs during debugging
+
+# Access log settings (optional)
+accessLog: {}
