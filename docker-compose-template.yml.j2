@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   traefik:
     image: traefik:v2.10
@@ -21,8 +19,19 @@ services:
     networks:
       - web  # Connect Traefik to the 'web' network
 
+  identityserver:
+    image: nginx:alpine  # A lightweight NGINX container
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.identityserver.rule=Host(`{{ domain_name }}`)"
+      - "traefik.http.routers.identityserver.entrypoints=websecure"
+      - "traefik.http.routers.identityserver.tls.certresolver=myresolver"
+    networks:
+      - web  # Connect Identity Server to the 'web' network
+
 volumes:
   traefik-certificates:
 
 networks:
-  web:  # Define the 'web' network
+  web:  # Define the 'web' network managed by Docker Compose
+    driver: bridge  # This allows Docker Compose to manage it
