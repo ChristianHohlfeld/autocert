@@ -18,14 +18,11 @@ services:
       - traefik-certificates:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
-
-  identityserver:
-    image: nginx:alpine  # A lightweight NGINX container
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.identityserver.rule=Host(`identityserver.de`)"
-      - "traefik.http.routers.identityserver.entrypoints=websecure"
-      - "traefik.http.routers.identityserver.tls.certresolver=myresolver"
+    networks:
+      - web  # Connect Traefik to the 'web' network
 
 volumes:
   traefik-certificates:
+
+networks:
+  web:  # Define the 'web' network
