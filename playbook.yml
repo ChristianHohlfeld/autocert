@@ -1,10 +1,8 @@
 ---
 - hosts: local
   become: true
-
-  vars:
-    traefik_directory: /home/chris/autocert
-    domain_name: identityserver.de  # The domain name is referenced here
+  vars_files:
+    - secrets.yml  # Include the secrets file for sensitive information
 
   tasks:
     # Task 1: Install Docker
@@ -20,31 +18,31 @@
         name: docker-compose
         state: present
 
-    # Task 3: Create directory for Traefik setup
+    # Task 3: Create Traefik directory
     - name: Create Traefik directory
       file:
-        path: "{{ traefik_directory }}"
+        path: "/home/{{ lookup('env', 'USER') }}/autocert"  # Use the environment variable to get the username
         state: directory
         mode: '0755'
 
-    # Task 4: Copy docker-compose.yml from a Jinja2 template
+    # Task 4: Copy docker-compose.yml template to the host
     - name: Copy docker-compose.yml template
       template:
         src: ./docker-compose-template.yml.j2
-        dest: "{{ traefik_directory }}/docker-compose.yml"
+        dest: "/home/{{ lookup('env', 'USER') }}/autocert/docker-compose.yml"
         mode: '0644'
 
     # Task 5: Copy traefik.yml to the host
     - name: Copy traefik.yml
       copy:
         src: ./traefik.yml
-        dest: "{{ traefik_directory }}/traefik.yml"
+        dest: "/home/{{ lookup('env', 'USER') }}/autocert/traefik.yml"
         mode: '0644'
 
-    # Task 6: Create acme.json and set permissions automatically
+    # Task 6: Create acme.json with correct permissions
     - name: Create acme.json with correct permissions
       file:
-        path: "{{ traefik_directory }}/acme.json"
+        path: "/home/{{ lookup('env', 'USER') }}/autocert/acme.json"
         state: touch
         mode: '0600'
 
@@ -52,4 +50,4 @@
     - name: Start Traefik
       command: docker-compose up -d
       args:
-        chdir: "{{ traefik_directory }}"
+        chdir: "/home/{{ lookup('env', 'USER') }}/autocert"

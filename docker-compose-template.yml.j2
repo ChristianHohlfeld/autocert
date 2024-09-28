@@ -7,7 +7,7 @@ services:
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
       - --certificatesresolvers.myresolver.acme.tlschallenge=true
-      - --certificatesresolvers.myresolver.acme.email=chris.hohlfeld@gmail.com
+      - --certificatesresolvers.myresolver.acme.email={{ letsencrypt_email }}
       - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
     ports:
       - "80:80"
@@ -20,18 +20,23 @@ services:
       - web  # Connect Traefik to the 'web' network
 
   identityserver:
-    image: nginx:alpine  # A lightweight NGINX container
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.identityserver.rule=Host(`{{ domain_name }}`)"
-      - "traefik.http.routers.identityserver.entrypoints=websecure"
-      - "traefik.http.routers.identityserver.tls.certresolver=myresolver"
+    image: quay.io/keycloak/keycloak:25.0.5  # Use Keycloak directly
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: {{ keycloak_db_username }}  # Using secrets
+      KC_DB_PASSWORD: {{ keycloak_db_password }}  # Using secrets
+      KEYCLOAK_ADMIN: {{ keycloak_admin }}  # Using secrets
+      KEYCLOAK_ADMIN_PASSWORD: {{ keycloak_admin_password }}  # Using secrets
+      KC_HOSTNAME: {{ kc_hostname }}  # Using secrets
+      KC_PROXY: edge
+    command: ["start-dev"]
     networks:
-      - web  # Connect Identity Server to the 'web' network
+      - web  # Connect Keycloak to the 'web' network
 
 volumes:
   traefik-certificates:
 
 networks:
   web:  # Define the 'web' network managed by Docker Compose
-    driver: bridge  # This allows Docker Compose to manage it
+    driver: bridge
